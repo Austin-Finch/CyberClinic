@@ -79,9 +79,9 @@ docker-compose up
 cd.. # back into ~/CyberClinic/
 cd Application
 python3 -m venv .venv
-source venv/bin/activate
+source .venv/bin/activate
 
-#On Windows: venv\Scripts\activate
+#On Windows: .venv\Scripts\activate
 
 
 #Note: requirements.txt will be added as we develop dependencies
