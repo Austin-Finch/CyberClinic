@@ -1,16 +1,16 @@
 FROM python:3.14.0 AS win_builder
 
-RUN python3 -m ensurepip --upgrade
+#RUN pip install --upgrade pip
 
-WORKDIR C:/shared
+WORKDIR c:\\shared
 COPY requirements.txt requirements.txt
 
-RUN pip install -r requirements.txt
-CMD ["pyinstaller", \ 
-    "--distpath C:\\dist\\windows", \
-    "-n CyberClinic", \
-    "--noconfirm", \
-    "client_application.py"]
+#RUN pip install -r requirements.txt
+#CMD ["pyinstaller", \ 
+#    "--distpath C:\\dist\\windows", \
+#    "-n CyberClinic", \
+#    "--noconfirm", \
+#    "client_application.py"]
 
 
 FROM python:3.14.0 AS linux_builder
