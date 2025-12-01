@@ -3,17 +3,32 @@ name: CyberClinic Standalone Application
 services:
 
   build_windows:
-    image: dockurr/windows
+    image: python:3.14.0
+    platform: "windows/amd64"
     volumes:
-      - ./src:/shared
-    command: ["pip", "install", "-U", "pyinstaller"]
+      - ./src:C:/shared
+      - ./dist:C:/dist
+    build:
+      target: win_builder
+    command: ["sleep", "infinity"]
+  
+  build_linux:
+    image: python:3.14.0
+    platform: "linux/amd64"
+    volumes:
+      - ./src:/src/
+      - ./dist:/dist
+    build:
+      target: linux_builder
+    command: ["sleep", "infinity"]
+    #command: "python -m  PyInstaller --distpath /dist/linux -n CyberClinic --noconfirm client_application.py"
     
   build_macos:
     image: dockurr/macos
-    command: ["pip", "install", "-U", "pyinstaller"]
-
-  build_linux:
-    image: ubuntu
+    environment:
+      VERSION: "11"
     volumes:
       - ./src:/src
-    command: ["pip", "install", "-U", "pyinstaller"]
+      - ./dist:/dist
+    build:
+      target: mac_builder
