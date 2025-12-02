@@ -11,7 +11,7 @@ import ctypes
 import sys
 import subprocess
 
-def is_admin(system):
+def is_admin(system: str):
     match system:
         case "Windows":
             try:
@@ -24,7 +24,7 @@ def is_admin(system):
             except:
                 return False
             
-def request_admin_privileges(system):
+def request_admin_privileges(system: str):
     match system:
         case "Windows":
             try:

@@ -5,8 +5,9 @@ import sys
 import os
 from dotenv import load_dotenv
 import permission_handler as perms
-import Application.src.backend_handler as backend
+import backend_handler as backend
 import platform
+import hashlib
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QApplication,
@@ -17,6 +18,9 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QWidget
 )
+
+BUF_SIZE = 65536
+apphash: str
 
 class Form(QDialog):
 
@@ -57,19 +61,34 @@ class Form(QDialog):
         email = self.e.text()
         passwd = self.p.text()
 
+        print(f"hash: {apphash}\n")
         print(f"{email}: {passwd}")
 
         self.l.setText("Verifying...")
 
 
+def compute_hash(filepath: str):
+    hash = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        while True:
+            data = f.read(BUF_SIZE)
+            if not data:
+                break
+            hash.update(data)
+    return hash.hexdigest()
+
+
 if __name__ == '__main__':
-    load_dotenv()
     system = platform.system()
     if not(perms.is_admin(system)):
         perms.request_admin_privileges(system)
         if not(perms.is_admin(system)):
             sys.exit("Please re-run with administrative privleges!")
+    
+    file = os.path.abspath(__file__)
+    apphash = compute_hash(file)
 
+    load_dotenv()
     app = QApplication(sys.argv)  
     w = Form()
     app.exec()
