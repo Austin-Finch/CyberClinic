@@ -1,1 +1,7 @@
 *.env
+__pycache__
+_internal
+build
+database.erd.json
+dist
+*.spec

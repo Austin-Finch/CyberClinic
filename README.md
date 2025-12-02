@@ -122,7 +122,7 @@ source venv/bin/activate
 <a href="#"><img src="https://github.com/Austin-Finch.png" width="100px;" alt="Austin Finch"/></a><br />
 <sub><b>Austin Finch</b></sub><br/>
 <sub><em>x Developer/Engineer</em></sub><br/>
-<sub>Focus: Dockerization, Database, Backend</sub>
+<sub>Focus: Dockerization, Database, Backend, Standalone Application</sub>
 </td>
 <td align="center">
 <a href="https://github.com/VanessaMedinaUNR"><img src="https://github.com/VanessaMedinaUNR.png" width="100px;" alt="Vanessa Medina"/></a><br />
