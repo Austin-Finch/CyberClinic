@@ -1,3 +1,6 @@
+#Cyber Clinic Standalone Application - Permission Handler
+#CS 425 Team 13 - Fall 2025
+
 # Code adapted from:
 #   Avinash Tare, How to run Python code with admin privileges
 #   dev.to, July 15 2025 
