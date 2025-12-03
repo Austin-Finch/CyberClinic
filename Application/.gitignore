@@ -1,2 +1,5 @@
 _internal
 VPN_config
+build
+__pycache__
+CyberClinic.spec
