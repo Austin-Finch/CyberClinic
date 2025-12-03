@@ -29,7 +29,8 @@ class ReportGenerator:
     
     def __init__(self):
         self.reptor_client = None
-        self.reports_dir = '/app/reports'  #docker volume mount path
+        # Use relative path that works both locally and in docker
+        self.reports_dir = os.path.join(os.path.dirname(__file__), '..', '..', 'reports')
         
         #ensure reports directory exists
         os.makedirs(self.reports_dir, exist_ok=True)

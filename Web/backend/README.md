@@ -8,7 +8,13 @@ This backend provides REST API endpoints for the cyber clinic web application. A
 
 ## Quick Start for Frontend
 
-1. **Start the backend server**
+1. **Start the backend server** (Easy method)
+   ```bash
+   cd Web/backend
+   ./start_server.sh
+   ```
+   
+   Or manually:
    ```bash
    cd Web/backend
    python3 -m venv venv

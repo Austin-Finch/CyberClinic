@@ -22,7 +22,9 @@ class StandaloneAppHandler:
     
     def __init__(self):
         self.standalone_app_path = os.environ.get('STANDALONE_APP_PATH', '/app/standalone')
-        self.scan_results_path = os.environ.get('SCAN_RESULTS_PATH', '/app/results')
+        # Use relative path that works both locally and in docker
+        default_path = os.path.join(os.path.dirname(__file__), '..', '..', 'results')
+        self.scan_results_path = os.environ.get('SCAN_RESULTS_PATH', default_path)
         
         #ensure directories exist
         os.makedirs(self.scan_results_path, exist_ok=True)
@@ -70,7 +72,7 @@ class StandaloneAppHandler:
                 command,
                 capture_output=True,
                 text=True,
-                timeout=3600  #1 hour timeout
+                timeout=3600
             )
             
             if result.returncode == 0:
