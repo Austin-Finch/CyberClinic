@@ -27,6 +27,8 @@ ENV/
 Thumbs.db
 
 # Application specific
+_internal
+build
 /Web/backend/app/reports/
 /Web/backend/app/results/
 *.log

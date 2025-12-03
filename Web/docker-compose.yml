@@ -3,9 +3,12 @@ name: CyberClinic Web Portal
 services:
 
   frontend:
-    image: openeuler/react:latest
+    #image: openeuler/react:latest
     ports:
-      - "80:80"
+      - "8080:80"
+    build:
+      context: frontend
+      dockerfile: Dockerfile
     depends_on:
       - backend
     networks:
@@ -16,6 +19,10 @@ services:
     build:
       context: backend
       target: builder
+    volumes:
+      - ./backend:/src
+    expose:
+      - 5000
     command: python3 main.py
     depends_on:
       - reptor
@@ -32,7 +39,7 @@ services:
     volumes:
       - ./backend:/src
     ports:
-      - "5000:443"
+      - "5000:5000"
     command: sleep infinity
     networks:
       - backend

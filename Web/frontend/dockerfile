@@ -4,8 +4,6 @@ RUN rm -rf /usr/share/nginx/html/*
 
 COPY . /usr/share/nginx/html
 
-EXPOSE 80
-
 # instructions to run frontend docker build
 # docker build -t my-frontend . 
 # docker run -d -p 8080:80 my-frontend
