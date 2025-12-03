@@ -1,10 +1,9 @@
 #Cyber Clinic user model
-#CS 425 Team 13 - Database models matching project schema
 
 from datetime import datetime
 
 class UserAccount:
-    #represents a user account matching our database schema
+    #represents a user account
     #corresponds to User table in project design
     
     def __init__(self, email, phone_number=None):

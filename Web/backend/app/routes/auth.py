@@ -1,5 +1,5 @@
 #Cyber Clinic authentication routes
-#CS 425 Team 13 - User login/registration
+#User login/registration
 
 from flask import Blueprint, request, jsonify
 import re
@@ -129,23 +129,3 @@ def login():
     except Exception as e:
         #handle any unexpected errors during login
         return jsonify({'error': 'login failed', 'details': str(e)}), 500
-
-@auth_bp.route('/users', methods=['GET'])
-def list_users():
-    #show all registered users (for development testing only)
-    #this will be removed in production for security reasons
-    #create a list of users without showing passwords
-    user_list = []
-    for username, user_data in users_db.items():
-        user_list.append({
-            'username': user_data['username'],
-            'email': user_data['email'],
-            'organization': user_data['organization'],
-            'is_active': user_data['is_active']
-        })
-    
-    return jsonify({
-        'users': user_list,
-        'count': len(user_list),
-        'note': 'development endpoint, will be removed in production'
-    }), 200
