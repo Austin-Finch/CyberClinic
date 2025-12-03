@@ -8,7 +8,7 @@
         body{
             display: block;
             height: auto;
-            background: #f8fafc;
+            background: white;
         }
         #bounding_box{
             width:95%;
@@ -17,30 +17,56 @@
             background: transparent;
             box-shadow: none;
             text-align: left;
+            max-width: 1200px; 
 
         }
-        .dash-header {
+        .dashboard-header {
             background: white;
             padding: 15px 30px;
             border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
         }
-        .brand-section h1{ color: #2563eb; font: size 18px; margin:0;}
-        .brand-section p {color: #64748b; font-size: 12px; margin: 0;}
+        .brand-section h1{ 
+            color: navy; 
+            font: size 18px; 
+            margin:0;
+        }
+
+        .brand-section p {
+            color: #64748b;
+            font-size: 12px;
+            margin: 0;
+        }
         .user-controls{
-            display: flex;
-            align-items: center;
+            display:flex;
+            align-items:center;
             gap: 15px;
             font-size:14px;
-            color: #333;
+            color: black;
         }
-        table {width:100%; border-collapse: collapse;}
-        th{ text-align: left; padding: 15px; color:#64748b; border-bottom: 1px solid #eee; font-size:14px;}
-        td { padding: 15px; border-bottom: 1px solid #eee; color: #333; vertical-align:middle;}
+        table {
+            width:100%; 
+            border-collapse: 
+            collapse;
+        }
+        th{ 
+            text-align: left;
+            padding: 15px; 
+            color:black; 
+            border-bottom: 1px 
+            solid #eee; 
+            font-size:14px;
+        }
+        td { 
+            padding: 15px; 
+            border-bottom: 1px solid #eee; 
+            color: #333; 
+            vertical-align:middle;
+        }
 
         .btn-black{
             background: #0f172a;
@@ -69,23 +95,57 @@
     </style>
     </head>
     <body>
-        <div id="bounding_box"
+        <div id="bounding_box">
             
             <div class="dashboard-header">
                 <div class="brand-section">
                 <h1>CyberClinic</h1>
-                <p> University of Nevada Reno</p>
+                <p> University of Nevada, Reno</p>
             </div>
             <div class=" user-controls">
-                <span id="User-email"> user@email.comm</span>
+                <span id="User-email"> user@email.com </span>
                 <span>⚙️</span>
             </div>
         </div>
 
         <div style=" display: flex; justify-content: space-between; align-items: center; margin-bottom: 20 px;">
-            <h1> </h1>
+            <h1 style="font-size: 20px; color: #333; margin: 0;">Dashboard </h1>
+            <button class="btn-black" onclick "">+ Configure New Scan </button>
         </div> 
-        
-    </body>
+
+        <div class="content-card">
+            <div class="card-title-row">
+                <h2>Active scans & Reports </h2>
+            </div>
+            <table id="scans-table">
+                <thread>
+                    <tr>
+                        <th>Name / Target </th>
+                        <th> Date (last Run) </th>
+                        <th>Status </th>
+                        <th> Security Rating</th>
+                        <th style="text-align: right;">Actions </th>
+                    </tr>
+                </thread>
+                    <tbody>
+                
+                    </tbody>
+                
+            </table>
+        </div>
+    </div>
+
+    <div class="fab">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2">
+            <path d ="M3 7v5a2 2 0 0 1 2-h2"></path>
+            <path d="M17 7v5a2 2 0 0 1 2 2v2"></path>
+            <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+            <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+            <line x1="8" y1="12" x2="16" y2="12"></line>
+
+        </svg>
+    </div>
+ </body>
+ </html>
    
     
