@@ -61,11 +61,11 @@ def register():
         
         email = data.get('email', '').strip().lower()
         password = data.get('password', '')
-        organization = data.get('organization', '').strip()
+        client_name = data.get('organization', '').strip()
         phone_number = data.get('phone', '').strip() 
         
         #make sure they provided the required information
-        if not email or not password or not organization or not phone_number:
+        if not email or not password or not client_name or not phone_number:
             return jsonify({
                 'error': 'missing required fields',
                 'required': ['email', 'password', 'organization', 'phone']
@@ -103,7 +103,7 @@ def register():
             db.execute_command(
                 """INSERT INTO users (id, email, password_hash, organization, phone_number)
                    VALUES (%s, %s, crypt(%s, gen_salt('bf')), %s, %s)""",
-                (user_id, email, password, organization, phone_number)
+                (user_id, email, password, client_name, phone_number)
             )
             
             #send back success message without showing password
@@ -112,7 +112,7 @@ def register():
                 'user': {
                     'user_id': user_id,
                     'email': email,
-                    'organization': organization,
+                    'organization': client_name,
                     'phone_number': phone_number
                 }
             }), 201
@@ -130,7 +130,7 @@ def register():
                 'user_id': user_id,
                 'email': email,
                 'password_hash': password_hash, 
-                'organization': organization,
+                'organization': client_name,
                 'phone_number': phone_number,
                 'created_at': '2025-12-03',
                 'is_active': True
@@ -145,7 +145,7 @@ def register():
                 'user': {
                     'user_id': user_id,
                     'email': email,
-                    'organization': organization,
+                    'organization': client_name,
                     'phone_number': phone_number
                 }
             }), 201
