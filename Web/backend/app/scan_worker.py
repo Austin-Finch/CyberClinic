@@ -89,7 +89,7 @@ class ScanWorker:
             domain = db.execute_single(
                 """SELECT domain
                 FROM network_domains
-                WHERE client_id = %s, subnet_name = %s""",
+                WHERE client_id = %s AND subnet_name = %s""",
                 (scan_job['client_id'], scan_job['subnet_name'])
                 )
             if domain:

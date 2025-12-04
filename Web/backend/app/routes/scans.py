@@ -107,7 +107,7 @@ def submit_scan():
             target_name = db.execute_single(
                 """INSERT INTO network (client_id, subnet_name, subnet_ip, subnet_netmask, public_facing) 
                    VALUES (%s, %s, %s, %s, %s) RETURNING subnet_name""",
-                (client_id, target_name, ip.network_address, ip.netmask, public_facing)
+                (client_id, target_name, str(ip.network_address), str(ip.netmask), public_facing)
             )['subnet_name']
             
             if target_type == "domain":
