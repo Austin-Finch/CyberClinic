@@ -1,1 +1,7 @@
 *.env
+_internal
+build
+Web/backend/results
+Web/backend/reports
+__pycache__
+database.erd.json
