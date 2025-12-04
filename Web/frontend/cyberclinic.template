@@ -5,8 +5,8 @@ server {
     # Serve static files for the frontend
     location / {
         root /usr/share/nginx/html;  # Path to your frontend build files
-        index index.html index.htm;
-        try_files $uri $uri/ =404;
+        index index.html;
+        try_files ${DOLLAR}uri ${DOLLAR}uri/ =404;
     }
 
     # Proxy requests to the Flask API
