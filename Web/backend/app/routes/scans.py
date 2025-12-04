@@ -22,8 +22,8 @@ def validate_domain(domain):
     if not domain or len(domain) > 253:
         return False
     
-    #domain validation regex pattern
-    domain_pattern = r'^[a-z0-9]+(\\.[a-z]{2,})$'
+    #domain validation regex pattern - more flexible for real domains
+    domain_pattern = r'^[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9\-]*[a-zA-Z0-9])?)*$'
     return bool(re.match(domain_pattern, domain))
 
 def validate_ip_address(ip):
@@ -53,8 +53,8 @@ def submit_scan():
         #get client_id from session (placeholder - will integrate with auth later)
         client_id = user_id = data.get('client_id', 1)
         
-        #validate required fields
-        required_fields = ['target_name', 'public_facing' 'target_type', 'target_value', 'scan_type']
+        #validate required fields  
+        required_fields = ['target_name', 'target_type', 'target_value', 'scan_type']
         for field in required_fields:
             if not data.get(field):
                 return jsonify({'error': f'Missing required field: {field}'}), 400
@@ -64,7 +64,7 @@ def submit_scan():
         target_value = data['target_value'].strip()
         scan_type = data['scan_type']
         
-        public_facing = False
+        public_facing = True 
         ip: ipaddress.IPv4Network
 
         #validate target type and value
@@ -87,44 +87,32 @@ def submit_scan():
             return jsonify({'error': 'Invalid target type. Must be: domain, ip, or range'}), 400
         
         #validate scan type
-        valid_scan_types = ['nmap', 'vulnerability', 'full']
+        valid_scan_types = ['nmap', 'nikto', 'vulnerability', 'full']
         if scan_type not in valid_scan_types:
             return jsonify({'error': f'Invalid scan type. Must be one of: {", ".join(valid_scan_types)}'}), 400
         
         db = get_db()
         
-        #check if target already exists
-        if target_type == 'domain':
-            existing_target = db.execute_single(
-                "SELECT subnet_id FROM network_domains WHERE domain = %s",
-                (target_value)
-            )
-        else:
-            existing_target = db.execute_single(
-                "SELECT subnet_id FROM network WHERE client_id = %s AND subnet_name = %s",
-                (client_id, target_name)
-            )
+        #check if target already exists in network_targets table  
+        existing_target = db.execute_single(
+            "SELECT id FROM network_targets WHERE target_value = %s AND target_type = %s",
+            (target_value, target_type)
+        )
         
         if existing_target:
-            target_id = existing_target['subnet_id']
+            target_id = existing_target['id']
             logger.info(f"Using existing target: {target_id}")
         else:
-            target_id = db.execute_single(
             #create new network target
-                    """INSERT INTO network (client_id, subnet_name, subnet_ip, public_facing, subnet_netmask) 
-                    VALUES (%s, %s, %s) RETURNING id""",
-                    (client_id, target_name, ip.network_address, public_facing, ip.netmask)
-                )['id']
-            if target_type == 'domain':
-                db.execute_single(
-                    """INSERT INTO network_domains (subnet_id, client_id, domain) 
-                    VALUES (%s, %s, %s)""",
-                    (target_id, client_id, target_value)
-                )
+            target_id = db.execute_single(
+                """INSERT INTO network_targets (target_name, target_type, target_value) 
+                   VALUES (%s, %s, %s) RETURNING id""",
+                (target_name, target_type, target_value)
+            )['id']
             logger.info(f"Created new target: {target_id}")
         
         #get user_id from session (placeholder - will integrate with auth later)
-        user_id = data.get('user_id', 1)  #default for development
+        user_id = data.get('user_id', 1) 
         
         #create scan job
         scan_config = {
@@ -330,7 +318,7 @@ def verify_target():
         #placeholder verification logic
         #in production this would check DNS, ping, port scans, authorization
         verification_result = {
-            'verified': True,  #placeholder - always pass for development
+            'verified': True,
             'reachable': True,
             'authorized': True,
             'verification_method': 'placeholder',
@@ -352,4 +340,95 @@ def verify_target():
         
     except Exception as e:
         logger.error(f"Target verification failed: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@scans_bp.route('/results/<int:scan_id>', methods=['GET'])
+def get_scan_results(scan_id):
+    #get the detailed results of a completed scan
+    try:
+        db = get_db()
+        
+        scan_details = db.execute_single(
+            """SELECT sj.*, n.subnet_name as target_name
+               FROM scan_jobs sj 
+               LEFT JOIN network n ON sj.target_id = n.subnet_id
+               WHERE sj.id = %s""",
+            (scan_id,)
+        )
+        
+        if not scan_details:
+            return jsonify({'error': 'Scan job not found'}), 404
+        
+        if scan_details['status'] not in ['completed', 'failed']:
+            return jsonify({
+                'error': 'Scan results not available',
+                'status': scan_details['status'],
+                'message': 'Scan must be completed to view results'
+            }), 400
+        
+        # Parse results from database
+        results = {}
+        if scan_details['results']:
+            try:
+                import json
+                results = json.loads(scan_details['results']) if isinstance(scan_details['results'], str) else scan_details['results']
+            except json.JSONDecodeError:
+                results = {'raw_output': scan_details['results']}
+        
+        return jsonify({
+            'scan_id': scan_details['id'],
+            'status': scan_details['status'],
+            'scan_type': scan_details['scan_type'],
+            'target_name': scan_details['target_name'],
+            'created_at': scan_details['created_at'].isoformat(),
+            'started_at': scan_details['started_at'].isoformat() if scan_details['started_at'] else None,
+            'completed_at': scan_details['completed_at'].isoformat() if scan_details['completed_at'] else None,
+            'results': results,
+            'error_message': scan_details['error_message']
+        })
+        
+    except Exception as e:
+        logger.error(f"Results retrieval failed for scan {scan_id}: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@scans_bp.route('/dashboard', methods=['GET'])
+def scan_dashboard():
+    #get dashboard overview of all scans with status counts
+    try:
+        db = get_db()
+        
+        # Get status summary
+        status_summary = db.execute_query(
+            """SELECT status, COUNT(*) as count
+               FROM scan_jobs
+               GROUP BY status
+               ORDER BY status""",
+            ()
+        )
+        
+        # Get recent scans
+        recent_scans = db.execute_query(
+            """SELECT sj.id, sj.status, sj.scan_type, sj.created_at,
+                      n.subnet_name as target_name, nd.domain
+               FROM scan_jobs sj
+               LEFT JOIN network n ON sj.target_id = n.subnet_id
+               LEFT JOIN network_domains nd ON n.subnet_id = nd.subnet_id
+               ORDER BY sj.created_at DESC
+               LIMIT 10""",
+            ()
+        )
+        
+        return jsonify({
+            'status_summary': [{'status': row['status'], 'count': row['count']} for row in status_summary],
+            'recent_scans': [{
+                'scan_id': scan['id'],
+                'status': scan['status'],
+                'scan_type': scan['scan_type'],
+                'target': scan['domain'] if scan['domain'] else scan['target_name'],
+                'created_at': scan['created_at'].isoformat()
+            } for scan in recent_scans]
+        })
+        
+    except Exception as e:
+        logger.error(f"Dashboard query failed: {e}")
         return jsonify({'error': 'Internal server error'}), 500

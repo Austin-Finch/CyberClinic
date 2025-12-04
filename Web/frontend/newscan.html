@@ -29,7 +29,8 @@
             <div>
                 <label for="scan_type">Select scan type:</label>
                 <select name="scan_type" id="scan_type" required>
-                    <option value="nmap">NMAP</option>
+                    <option value="nmap">NMAP (Network/Port Scan)</option>
+                    <option value="nikto">Nikto (Web Vulnerability Scan)</option>
                     <option value="vulnerability">Vulnerability</option>
                     <option value="full">Full</option>
                 </select>
@@ -58,7 +59,9 @@
                 target_name: target_name,
                 target_type: target_type,
                 target_value: target_value,
-                scan_type: scan_type
+                scan_type: scan_type,
+                client_id: 1, // Default client for development
+                user_id: 1   // Default user for development
             })
         });
     

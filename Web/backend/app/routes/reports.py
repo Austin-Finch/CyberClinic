@@ -16,17 +16,14 @@ except ImportError:
 
 #import our database manager for data operations
 from app.database import get_db
-
 #create blueprint for report-related endpoints
 reports_bp = Blueprint('reports', __name__, url_prefix='/api/reports')
-
 #setup logging for report operations
 logger = logging.getLogger(__name__)
 
 class ReportGenerator:
     #handles report generation using SysReptor integration
     #creates professional cybersecurity reports from scan results
-    
     def __init__(self):
         self.reptor_client = None
         # Use relative path that works both locally and in docker
@@ -42,16 +39,36 @@ class ReportGenerator:
         #initialize connection to SysReptor server
         #uses environment variables for configuration
         try:
-            reptor_config = {
-                'serverurl': os.environ.get('REPTOR_SERVER_URL', 'http://reptor:8000'),
-                'token': os.environ.get('REPTOR_API_TOKEN', 'dev-token')
-            }
+            server_url = os.environ.get('REPTOR_SERVER_URL', 'http://reptor:8000')
+            token = os.environ.get('REPTOR_API_TOKEN', 'dev-token')
             
-            self.reptor_client = Reptor(**reptor_config)
-            logger.info("SysReptor client initialized successfully")
+            logger.info(f"Initializing SysReptor with server: {server_url}")
+            
+            #try different initialization methods based on reptor version
+            try:
+                #method 1: Direct initialization with server parameter
+                self.reptor_client = Reptor(server=server_url, token=token)
+                logger.info("SysReptor client initialized with 'server' parameter")
+            except TypeError as te:
+                logger.warning(f"'server' parameter failed: {te}, trying alternative methods")
+                
+                #method 2: Try with serverurl (fallback)
+                try:
+                    self.reptor_client = Reptor(serverurl=server_url, token=token)
+                    logger.info("SysReptor client initialized with 'serverurl' parameter")
+                except TypeError as te2:
+                    logger.warning(f"'serverurl' parameter also failed: {te2}, trying config dict")
+                    
+                    #method 3: Try with config dict
+                    config = {'server': server_url, 'token': token}
+                    self.reptor_client = Reptor(config=config)
+                    logger.info("SysReptor client initialized with config dict")
             
         except Exception as e:
-            logger.error(f"Failed to initialize SysReptor: {e}")
+            logger.error(f"Failed to initialize SysReptor with all methods: {e}")
+            logger.error(f"Error type: {type(e).__name__}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             self.reptor_client = None
     
     def generate_report(self, scan_id, report_format='pdf'):
@@ -391,3 +408,71 @@ def list_reports():
     except Exception as e:
         logger.error(f"Report listing failed: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+
+@reports_bp.route('/debug/reptor', methods=['GET'])
+def debug_reptor():
+    #debug endpoint to test SysReptor initialization and connection
+    try:
+        # Test if reptor module is available
+        if not REPTOR_AVAILABLE:
+            return jsonify({
+                'status': 'error',
+                'message': 'Reptor module not available',
+                'reptor_available': False
+            })
+        
+        # Test initialization
+        server_url = os.environ.get('REPTOR_SERVER_URL', 'http://reptor:8000')
+        token = os.environ.get('REPTOR_API_TOKEN', 'dev-token')
+        
+        debug_info = {
+            'reptor_available': REPTOR_AVAILABLE,
+            'server_url': server_url,
+            'token_set': bool(token and token != 'dev-token'),
+            'initialization_attempts': []
+        }
+        
+        # Try different initialization methods
+        methods = [
+            ('server_token', lambda: Reptor(server=server_url, token=token)),
+            ('serverurl_token', lambda: Reptor(serverurl=server_url, token=token)),
+            ('config_dict', lambda: Reptor(config={'server': server_url, 'token': token})),
+            ('config_dict_serverurl', lambda: Reptor(config={'serverurl': server_url, 'token': token}))
+        ]
+        
+        for method_name, init_func in methods:
+            try:
+                client = init_func()
+                debug_info['initialization_attempts'].append({
+                    'method': method_name,
+                    'status': 'success',
+                    'client_type': str(type(client))
+                })
+                # Test connection if possible
+                try:
+                    # Try to call a simple method if available
+                    if hasattr(client, 'get_projects'):
+                        projects = client.get_projects()
+                        debug_info['initialization_attempts'][-1]['connection_test'] = 'success'
+                    else:
+                        debug_info['initialization_attempts'][-1]['connection_test'] = 'no_test_method'
+                except Exception as conn_e:
+                    debug_info['initialization_attempts'][-1]['connection_test'] = f'failed: {str(conn_e)}'
+                break  # Use first successful method
+            except Exception as e:
+                debug_info['initialization_attempts'].append({
+                    'method': method_name,
+                    'status': 'failed',
+                    'error': str(e),
+                    'error_type': type(e).__name__
+                })
+        
+        return jsonify(debug_info)
+        
+    except Exception as e:
+        logger.error(f"Debug reptor failed: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e),
+            'error_type': type(e).__name__
+        }), 500
