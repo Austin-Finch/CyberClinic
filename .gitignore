@@ -34,6 +34,7 @@ build
 *.log
 *.sqlite
 *.db
+VPN_config
 
 # Development and testing
 test_results.json
