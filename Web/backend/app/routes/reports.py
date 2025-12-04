@@ -43,9 +43,8 @@ class ReportGenerator:
         #uses environment variables for configuration
         try:
             reptor_config = {
-                'server_url': os.environ.get('REPTOR_SERVER_URL', 'http://reptor:8000'),
-                'api_token': os.environ.get('REPTOR_API_TOKEN', 'dev-token'),
-                'project_id': os.environ.get('REPTOR_PROJECT_ID', 'cyberclinic')
+                'serverurl': os.environ.get('REPTOR_SERVER_URL', 'http://reptor:8000'),
+                'token': os.environ.get('REPTOR_API_TOKEN', 'dev-token')
             }
             
             self.reptor_client = Reptor(**reptor_config)

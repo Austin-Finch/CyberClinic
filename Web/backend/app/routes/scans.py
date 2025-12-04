@@ -2,6 +2,7 @@
 
 from flask import Blueprint, request, jsonify
 import re
+import socket
 import ipaddress
 from datetime import datetime
 import logging
@@ -22,7 +23,7 @@ def validate_domain(domain):
         return False
     
     #domain validation regex pattern
-    domain_pattern = r'^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$'
+    domain_pattern = r'^[a-z0-9]+(\\.[a-z]{2,})$'
     return bool(re.match(domain_pattern, domain))
 
 def validate_ip_address(ip):
@@ -49,28 +50,39 @@ def submit_scan():
     #creates network target, validates it, and creates scan job
     try:
         data = request.get_json()
+        #get client_id from session (placeholder - will integrate with auth later)
+        client_id = user_id = data.get('client_id', 1)
         
         #validate required fields
-        required_fields = ['target_name', 'target_type', 'target_value', 'scan_type']
+        required_fields = ['target_name', 'public_facing' 'target_type', 'target_value', 'scan_type']
         for field in required_fields:
             if not data.get(field):
                 return jsonify({'error': f'Missing required field: {field}'}), 400
-        
+
         target_name = data['target_name'].strip()
         target_type = data['target_type'].lower()
         target_value = data['target_value'].strip()
         scan_type = data['scan_type']
         
+        public_facing = False
+        ip: ipaddress.IPv4Network
+
         #validate target type and value
         if target_type == 'domain':
             if not validate_domain(target_value):
                 return jsonify({'error': 'Invalid domain format'}), 400
+            ip = ipaddress.IPv4Network(socket.gethostbyname(target_value))
+
         elif target_type == 'ip':
             if not validate_ip_address(target_value):
                 return jsonify({'error': 'Invalid IP address format'}), 400
+            ip = ipaddress.IPv4Network(target_value, strict=False)
+
         elif target_type == 'range':
             if not validate_ip_range(target_value):
                 return jsonify({'error': 'Invalid IP range format (use CIDR notation)'}), 400
+            ip = ipaddress.IPv4Network(target_value, strict=False)
+
         else:
             return jsonify({'error': 'Invalid target type. Must be: domain, ip, or range'}), 400
         
@@ -82,21 +94,33 @@ def submit_scan():
         db = get_db()
         
         #check if target already exists
-        existing_target = db.execute_single(
-            "SELECT id, verified FROM network_targets WHERE target_value = %s AND target_type = %s",
-            (target_value, target_type)
-        )
+        if target_type == 'domain':
+            existing_target = db.execute_single(
+                "SELECT subnet_id FROM network_domains WHERE domain = %s",
+                (target_value)
+            )
+        else:
+            existing_target = db.execute_single(
+                "SELECT subnet_id FROM network WHERE client_id = %s AND subnet_name = %s",
+                (client_id, target_name)
+            )
         
         if existing_target:
-            target_id = existing_target['id']
+            target_id = existing_target['subnet_id']
             logger.info(f"Using existing target: {target_id}")
         else:
-            #create new network target
             target_id = db.execute_single(
-                """INSERT INTO network_targets (target_name, target_type, target_value) 
-                   VALUES (%s, %s, %s) RETURNING id""",
-                (target_name, target_type, target_value)
-            )['id']
+            #create new network target
+                    """INSERT INTO network (client_id, subnet_name, subnet_ip, public_facing, subnet_netmask) 
+                    VALUES (%s, %s, %s) RETURNING id""",
+                    (client_id, target_name, ip.network_address, public_facing, ip.netmask)
+                )['id']
+            if target_type == 'domain':
+                db.execute_single(
+                    """INSERT INTO network_domains (subnet_id, client_id, domain) 
+                    VALUES (%s, %s, %s)""",
+                    (target_id, client_id, target_value)
+                )
             logger.info(f"Created new target: {target_id}")
         
         #get user_id from session (placeholder - will integrate with auth later)
@@ -113,7 +137,7 @@ def submit_scan():
             """INSERT INTO scan_jobs (user_id, target_id, scan_type, scan_config, status) 
                VALUES (%s, %s, %s, %s, 'pending') RETURNING id""",
             (user_id, target_id, scan_type, str(scan_config))
-        )['id']
+        )['id'] 
         
         logger.info(f"Created scan job: {scan_job_id} for target: {target_id}")
         

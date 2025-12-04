@@ -177,8 +177,8 @@ def login():
             
             #check if user exists and password is correct using pgcrypto
             user_data = db.execute_single(
-                """SELECT id, email, organization, phone_number, is_active
-                   FROM users 
+                """SELECT user_id, client_id, client_name, email, phone_number, client_admin
+                   FROM users JOIN client_users
                    WHERE email = %s AND password_hash = crypt(%s, password_hash)""",
                 (email, password)
             )
@@ -187,16 +187,17 @@ def login():
                 return jsonify({'error': 'invalid credentials'}), 401
             
             #make sure account is active
-            if not user_data['is_active']:
-                return jsonify({'error': 'account deactivated'}), 403
+            #if not user_data['is_active']:
+            #    return jsonify({'error': 'account deactivated'}), 403
             
             #login successful
             return jsonify({
                 'message': 'login successful',
                 'user': {
                     'user_id': user_data['id'],
+                    'client_id': user_data['client_id'],
                     'email': user_data['email'],
-                    'organization': user_data['organization'],
+                    'client_name': user_data['client_name'],
                     'phone_number': user_data['phone_number']
                 },
                 'session': 'temporary-session-token'
@@ -214,16 +215,17 @@ def login():
                 return jsonify({'error': 'invalid credentials'}), 401
             
             #make sure account is active
-            if not user_data['is_active']:
-                return jsonify({'error': 'account deactivated'}), 403
+            #if not user_data['is_active']:
+            #    return jsonify({'error': 'account deactivated'}), 403
             
             #login successful
             return jsonify({
                 'message': 'login successful (temp storage)',
                 'user': {
-                    'user_id': user_data['user_id'],
+                    'user_id': user_data['id'],
+                    'client_id': user_data['client_id'],
                     'email': user_data['email'],
-                    'organization': user_data['organization'],
+                    'client_name': user_data['client_name'],
                     'phone_number': user_data['phone_number']
                 },
                 'session': 'temporary-session-token'
