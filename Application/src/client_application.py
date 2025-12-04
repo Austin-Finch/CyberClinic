@@ -4,7 +4,7 @@ import keyring
 import sys
 import os
 import socket
-import app
+import main_app
 from dotenv import load_dotenv
 import permission_handler as perms
 import vpn_handler as vpn
@@ -63,7 +63,7 @@ class Form(QDialog):
         email = self.e.text()
         passwd = self.p.text()
         
-        conn = vpn.vpn_client(crt, "localhost", int(vpn_port))
+        conn = vpn.vpn_client(crt, vpn_host, int(vpn_port))
 
         send = f'{apphash}: {email}:{passwd}'
         try:
@@ -71,8 +71,8 @@ class Form(QDialog):
             data = conn.recv(1024)
             print(f"Received from server: {data}")
             if data:
+                main_app.save_user(email)
                 keyring.set_password("cyberclinic", email, passwd)
-                app.save_user(email)
         finally:
             conn.close()
 
@@ -94,7 +94,7 @@ def compute_hash(filepath: str):
 
 
 if __name__ == '__main__':
-    if not app.admin():
+    if not main_app.admin():
         sys.exit("Please re-run with administrative privleges!")
 
     load_dotenv()
@@ -105,7 +105,11 @@ if __name__ == '__main__':
     vpn_crt = os.getenv('VPN_CRT', 'server.crt')
     vpn_host = os.getenv('VPN_HOST', 'localhost')
     vpn_port = os.getenv('VPN_PORT', '6666')
-    crt = os.path.join(os.path.dirname(file), vpn_crt)
+
+    if getattr(sys, 'frozen', False):
+        crt = os.path.join(sys._MEIPASS, vpn_crt)
+    else:
+        crt = vpn_crt
 
     user = os.environ.get('CYBERCLINIC_USER')
     if user:

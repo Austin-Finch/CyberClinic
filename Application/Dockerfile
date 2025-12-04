@@ -1,4 +1,4 @@
-FROM python:3.14.0 AS win_builder
+FROM python:3.14 AS win_builder
 
 #RUN pip install --upgrade pip
 
@@ -13,19 +13,21 @@ COPY requirements.txt requirements.txt
 #    "client_application.py"]
 
 
-FROM python:3.14.0 AS linux_builder
+FROM python:3.14 AS linux_builder
 
 RUN apt update && \
-  apt install libgl1 libxkbcommon-x11-0 libegl1 dbus -y && \
+  apt install libqt6core6 libxcb1 libxcb-cursor0 libgl1 libxkbcommon-x11-0 libegl1 dbus -y && \
   apt upgrade -y
 RUN pip install --upgrade pip
 
-WORKDIR /src
-COPY requirements.txt requirements.txt
+COPY src/requirements.txt src/requirements.txt
+RUN pip install -r src/requirements.txt
 
-RUN pip install -r requirements.txt
+COPY ./src /src
 
+WORKDIR /dist
 
+RUN python -m PyInstaller --clean -F /src/client_application.py -n CyberClinic --noconfirm --add-data /src/VPN_config:.
 FROM dockurr/macos AS mac_builder
 
 ENV RELEASE="python-3.13.9-macos11.pkg"

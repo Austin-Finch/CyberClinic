@@ -1,29 +1,27 @@
 name: CyberClinic Standalone Application
 
 services:
-
   # Windows builder can only be run on Windows host or VM
   build_windows:
-    image: python:3.14.0
     platform: "windows/amd64"
     volumes:
-      - Z:\src:C:\shared
-      - Z:\dist:C:\dist
+      - Z:\src:C:\shared #Map directory of src to C:\src
+      - Z:\dist\windows:C:\dist #Map directory of dist to C:\dist
     build:
       target: win_builder
-    command: "pyinstaller --distpath C:\\dist\\windows -n CyberClinic --noconfirm client_application.py"
+    command: "pyinstaller --distpath C:\\dist -n CyberClinic --noconfirm client_application.py"
   
   build_linux:
-    image: python:3.14.0
     platform: "linux/amd64"
     volumes:
-      - ./src:/src/
-      - ./dist:/dist
+      - ./src:/src
+      - ./dist/linux:/dist:rw
     build:
       target: linux_builder
     command: ["sleep", "infinity"]
-    #command: "python -m  PyInstaller --distpath /dist/linux -n CyberClinic --noconfirm client_application.py"
+    #command: "python -m PyInstaller --clean -F /src/client_application.py -n CyberClinic --noconfirm --add-data /src/VPN_config:."
     
+  # MacOS builder still untested
   build_macos:
     image: dockurr/macos
     environment:
