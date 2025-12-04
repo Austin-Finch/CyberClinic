@@ -35,6 +35,8 @@ build
 *.sqlite
 *.db
 VPN_config
+Web/backend/results
+Web/backend/reports
 
 # Development and testing
 test_results.json
